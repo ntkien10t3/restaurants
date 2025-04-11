@@ -1,14 +1,22 @@
 "use client";
 
 import RestaurantItem from "@/components/restaurant-item/restauran-item";
+import SkeletonCard from "@/components/skeleton/skeleton-card";
+import { useDebounce } from "@/hooks/useDebounce";
 import { trpc } from "@/utils/trpc";
 import { Restaurant } from "@prisma/client";
 import { useEffect, useState } from "react";
 
 export default function Home() {
-  const {data: restaurantResponse} = trpc.restaurant.getRestaurants.useQuery();
+  const [keyword, setKeyword] = useState<string>()
+  const {data: restaurantResponse, isLoading} = trpc.restaurant.getRestaurants.useQuery({keyword});
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
-  const [filterRestaurants, setFilterRestaurants] = useState<Restaurant[]>([])
+  const [inputValue, setInputValue] = useState('')
+  const debouncedValue = useDebounce(inputValue, 1000)
+
+  useEffect(() => {
+    setKeyword(debouncedValue)
+  }, [debouncedValue])
 
   useEffect(() => {
     if (restaurantResponse === undefined) return
@@ -36,19 +44,10 @@ export default function Home() {
     }
 
     setRestaurants(results)
-    setFilterRestaurants(results);
   }, [restaurantResponse])
 
   const handleSearch = (value: string) => {
-    const results: Restaurant[] = [];
-    for (let i = 0; i < restaurants.length; i++) {
-      const item = restaurants[i]
-      if (item.name.includes(value)) {
-        results.push(item)
-      }
-    }
-
-    setFilterRestaurants(results)
+    setInputValue(value)
   }
 
   return (
@@ -65,9 +64,19 @@ export default function Home() {
         />
       </div>
       <div className="flex flex-wrap items-center gap-x-[20] gap-y-[20] bg-[#F7F8F9] p-4">
-        {filterRestaurants?.map((item) => (
+        {isLoading && (
+           <div className="w-[300px] h-[150px]">
+            <SkeletonCard></SkeletonCard>
+          </div>
+        )}
+        {!isLoading && restaurants.length > 0 && restaurants?.map((item) => (
           <RestaurantItem key={item.id} restaurant={item}></RestaurantItem>
         ))}
+        {!isLoading && restaurants.length == 0 && (
+          <div className="text-center py-8 text-gray-500">
+            There is no results
+          </div>
+        )}
       </div>
     </>
   );

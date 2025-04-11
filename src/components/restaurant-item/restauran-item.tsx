@@ -1,5 +1,6 @@
 import { trpc } from "@/utils/trpc";
 import { Restaurant } from "@prisma/client"
+import { Heart, Star } from "lucide-react";
 import Image from "next/image"
 
 interface RestaurantItemProps {
@@ -17,28 +18,41 @@ export default function RestaurantItem({restaurant}: RestaurantItemProps) {
   const handleClick = () => {
     mutation.mutate(restaurant);
   };
-  
-  return <>
-    <div className="flex flex-col w-[300px]">
-      <div className="flex items-center justify-center rounded-e-lg w-[300px] h-[150px]">
-        <Image src={restaurant.image} width={100} height={100} alt="" className="justify-center"></Image>
-      </div>
-      <p className="text-orange-300">{restaurant.featuredText}</p>
-      <div className="flex justify-between">
-        <p className="font-bold">{restaurant.name}</p>
-        <div className="flex gap-x-[2px] text-[14px] text-[#666666]">
-          <p>{restaurant.rating}</p>
-          <p>({restaurant.ratingCount})</p>
+
+  return (
+    <div className="bg-white rounded-2xl shadow-md overflow-hidden transition hover:shadow-lg w-[300px]">
+      <Image
+        src={restaurant.image}
+        alt={restaurant.name}
+        className="w-full h-48 object-cover"
+        width={150}
+        height={150}
+      />
+      <div className="p-4 space-y-2">
+        <div className="flex justify-between items-center">
+          <h3 className="text-xl font-semibold">{restaurant.name}</h3>
+          <button
+            onClick={() => handleClick()}
+            className={`p-1 rounded-full transition hover:cursor-pointer ${
+              restaurant.isFavorite ? "text-red-500" : "text-gray-400 hover:text-red-500"
+            }`}
+          >
+            <Heart fill={restaurant.isFavorite ? "currentColor" : "none"} />
+          </button>
+        </div>
+        <p className="text-sm text-gray-600 line-clamp-2">{restaurant.description}</p>
+        <div className="flex items-center gap-1 text-yellow-500">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Star
+              key={i}
+              className={`w-4 h-4 ${
+                i < restaurant.rating ? "fill-current" : "text-gray-300"
+              }`}
+            />
+          ))}
+          <span className="text-sm text-gray-500 ml-2">{restaurant.rating}/5</span>
         </div>
       </div>
-      <p className="text-[14px] text-[#333333]">{restaurant.description}</p>
-      <p className="text-[16px] text-[#333333]"><span className="uppercase">{restaurant.city}</span> - <span>{restaurant.category}</span> - <span>{restaurant.priceRange}</span></p>
-      <button
-        onClick={handleClick}
-        className="mt-2 inline-flex items-center px-3 py-1 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500"
-      >
-        {restaurant.isFavorite ? 'Favorited ❤️' : 'Add to Favorite'}
-      </button>
     </div>
-  </>
+  );
 }
